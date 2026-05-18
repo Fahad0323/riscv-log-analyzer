@@ -1,0 +1,13 @@
+# Output files
+*.csv
+*.log
+report.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+*.swp
+*~
