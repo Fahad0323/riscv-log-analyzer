@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# Best practice: Script ko fail hone par turant rokne ke liye
 set -euo pipefail
 
-# ---------------------------------------------------------
-# FUNCTION 1: Help aur usage instructions dikhane ke liye
-# ---------------------------------------------------------
+# FUNCTION 1: Help aur usage instructions 
 print_help() {
     echo "Usage: $0 [options] <log_file>"
     echo "Options:"
@@ -15,13 +12,13 @@ print_help() {
     echo "  --help               Print usage information"
 }
 
-# Default settings (Variables)
+# Variables
 FORMAT="text"
 OUTPUT_FILE=""
 VERBOSE=0
 LOG_FILE=""
 
-# Command-line arguments ko parse karne ke liye 'while' aur 'case' ka use
+# use while or case statments for Command-line arguments 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help)
@@ -52,22 +49,21 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# ERROR HANDLING: Agar log file ka naam miss ho gaya hai
+# ERROR HANDLING for log files
 if [[ -z "$LOG_FILE" ]]; then
     echo "Error: Missing log file argument."
     print_help
     exit 1
 fi
 
-# ERROR HANDLING: Agar file system mein exist nahi karti
+# ERROR HANDLING for file not exist
 if [[ ! -f "$LOG_FILE" ]]; then
     echo "Error: Log file '$LOG_FILE' not found."
     exit 1
 fi
 
-# ---------------------------------------------------------
-# FUNCTION 2: Asal analysis ka kaam yahan hota hai
-# ---------------------------------------------------------
+# FUNCTION 2:analysis 
+
 analyze_log() {
     local file="$1"
 
@@ -75,7 +71,7 @@ analyze_log() {
         echo "[VERBOSE] Analyzing simulation log: $file"
     fi
 
-    # 1. Total aur baqi counts nikalna (grep aur wc ka use)
+    # Total aur baqi counts nikalna (grep aur wc ka use)
     # || true lagaya hai taake error na aaye agar koi line na mile (set -e ki wajah se)
     local total_tests=$(grep -c "TEST START:" "$file" || true)
     local pass_count=$(grep -c "TEST PASS:" "$file" || true)
@@ -87,17 +83,17 @@ analyze_log() {
         exit 1
     fi
 
-    # 2. Pass rate calculate karna (awk use kiya hai floats ke liye)
+    # 2. Pass rate calculate (awk use kiya hai floats ke liye)
     local pass_rate=$(awk -v p="$pass_count" -v t="$total_tests" 'BEGIN { printf "%.2f", (p/t)*100 }')
 
-    # 3. Fail hone wale tests ke naam nikalna (awk se column extract karna)
+    # Fail test names (awk se column extract karna)
     local fail_list=$(grep "TEST FAIL:" "$file" | awk '{print $5}' || true)
 
-    # 4. Execution times extract karna (sed se brackets aur 's' hatana)
-    # Example format: (0.82s) -> 0.82
+    # Execution times extract karna (sed se brackets aur 's' hatana)
+
     local times=$(grep -E "TEST PASS:|TEST FAIL:" "$file" | awk '{print $NF}' | sed 's/(//g; s/s)//g' || true)
 
-    # 5. Min, Max, aur Avg calculate karna awk script ke zariye
+    # 5. Min,Max,andAvg calculate karna using awk 
     local time_stats=$(echo "$times" | awk '
         BEGIN { min=9999; max=0; sum=0; count=0 }
         {
@@ -112,19 +108,19 @@ analyze_log() {
         }
     ')
 
-    # Time stats ko alag alag variables mein dalna
+    # Time stats put in separate variables
     local min_time=$(echo "$time_stats" | awk '{print $1}')
     local max_time=$(echo "$time_stats" | awk '{print $2}')
     local avg_time=$(echo "$time_stats" | awk '{print $3}')
 
-    # Output kaha bhejna hai (file ya terminal)
+    # Output (file ya terminal)
     local dest="/dev/stdout"
     if [[ -n "$OUTPUT_FILE" ]]; then
         dest="$OUTPUT_FILE"
         if [[ "$VERBOSE" -eq 1 ]]; then echo "[VERBOSE] Writing output to $dest"; fi
     fi
 
-    # 6. Formatting (Text vs CSV)
+    # Formatting (Text vs CSV)
     if [[ "$FORMAT" == "csv" ]]; then
         {
             echo "Metric,Value"
@@ -161,7 +157,7 @@ analyze_log() {
         } > "$dest"
     fi
 
-    # Requirement: Exit code 0 if pass, 1 if any fail
+    # Exit code 0 if pass, 1 if any fail
     if [[ "$fail_count" -gt 0 ]]; then
         return 1
     else
