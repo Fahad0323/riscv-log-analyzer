@@ -1,4 +1,3 @@
-cat << 'EOF' > scripts/generate_report.sh
 #!/bin/bash
 
 echo "=== Generating Final CSV Report ==="
@@ -28,4 +27,3 @@ for file in test_data/*.log; do
 done
 
 echo "Done! Report saved in output/summary.csv"
-EOF

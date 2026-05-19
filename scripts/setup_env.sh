@@ -1,4 +1,3 @@
-cat << 'EOF' > scripts/setup_env.sh
 #!/bin/bash
 
 echo " RISC-V Environment Setup Check"
@@ -25,4 +24,3 @@ else
 fi
 
 echo "Environment Check Completed!"
-EOF
